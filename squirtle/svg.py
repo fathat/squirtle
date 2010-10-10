@@ -65,14 +65,20 @@ def setup_gl():
 
 
 class SvgPath(object):
-    def __init__(self, path, stroke, polygon, fill, transform, path_id, desc):
+    def __init__(self, path, stroke, polygon, fill, transform, path_id, title, desc):
         self.path = path if path else []
         self.stroke = stroke
         self.polygon = polygon
         self.fill = fill
         self.transform = transform
         self.id = path_id
+        self.title = title
         self.description = desc
+        
+    def __repr__(self):
+        return "<SvgPath id=%s title='%s' description='%s' transform=%s>" %(
+            self.id, self.title, self.description, self.transform
+        )
                                
 class TriangulationError(Exception):
     """Exception raised when triangulation of a filled area fails. For internal use only."""
@@ -87,7 +93,7 @@ class SVG(object):
     """
     
     _disp_list_cache = {}
-    def __init__(self, filename, anchor_x=0, anchor_y=0, bezier_points=BEZIER_POINTS, circle_points=CIRCLE_POINTS):
+    def __init__(self, filename, anchor_x=0, anchor_y=0, bezier_points=BEZIER_POINTS, circle_points=CIRCLE_POINTS, invert_y=False):
         """Creates an SVG object from a .svg or .svgz file.
         
             `filename`: str
@@ -105,7 +111,9 @@ class SVG(object):
                 Defaults to 10.
                 
         """
+        self.path_lookup = {}
         self.paths = []
+        self.invert_y = invert_y
         self.filename = filename
         self.bezier_points = bezier_points
         self.circle_points = circle_points
@@ -260,10 +268,16 @@ class SVG(object):
         self.width = self.parse_float(self.tree._root.get("width", '0'))
         self.height = self.parse_float(self.tree._root.get("height", '0'))
         if self.height:
-            self.transform = Matrix([1, 0, 0, 1, 0, 0])
+            if self.invert_y:
+                self.transform = Matrix([1, 0, 0, -1, 0, self.height])
+            else:
+                self.transform = Matrix([1, 0, 0, 1, 0, 0])
         else:
             x, y, w, h = (self.parse_float(x) for x in parse_list(self.tree._root.get("viewBox")))
-            self.transform = Matrix([1, 0, 0, 1, 0, 0])
+            if self.invert_y:
+                self.transform = Matrix([1, 0, 0, -1, 0, 0])
+            else:
+                self.transform = Matrix([1, 0, 0, 1, 0, 0])
             self.height = h
             self.width = w
         self.opacity = 1.0
@@ -283,7 +297,8 @@ class SVG(object):
         fill_opacity = float(e.get('fill-opacity', 1))
         stroke_opacity = float(e.get('stroke-opacity', 1))
         self.path_id = e.get('id', '')
-        self.path_description = e.get('title', '')
+        self.path_title = e.find('title')
+        self.path_description = ''
 
         
         oldtransform = self.transform
@@ -536,9 +551,11 @@ class SVG(object):
                     if (pt[0] - loop[-1][0])**2 + (pt[1] - loop[-1][1])**2 > TOLERANCE:
                         loop.append(pt)
                 path.append(loop)
-            self.paths.append(SvgPath(path if self.stroke else None, self.stroke,
+            path_object = SvgPath(path if self.stroke else None, self.stroke,
                                self.triangulate(path) if self.fill else None, self.fill,
-                               self.transform, self.path_id, self.path_description))
+                               self.transform, self.path_id, self.path_title, self.path_description)
+            self.paths.append(path_object)
+            self.path_lookup[self.path_id] = path_object
         self.path = []
 
     def triangulate(self, looplist):

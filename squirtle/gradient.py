@@ -116,9 +116,6 @@ class LinearGradient(Gradient):
     def apply_shader(self, transform):
         if not self.stops: return
         linear_shader.use()
-        print self.x1, self.y1
-        print self.x2, self.y2
-        print self.grad_transform((self.x1, self.y1))
         linear_shader.uniformf("start", self.x1, self.y1)
         linear_shader.uniformf("end", self.x2, self.y2)
         linear_shader.uniformMatrixf("worldTransform", False, svg_matrix_to_gl_matrix(transform))

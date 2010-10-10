@@ -5,12 +5,18 @@ import pyglet
 from pyglet.gl import *
 import squirtle
 
-w = pyglet.window.Window(800, 600)
+config = pyglet.gl.Config(sample_buffers=1, samples=4)
+w = pyglet.window.Window(config=config, resizable=True)
+
+
+#w = pyglet.window.Window(800, 600)
 keys = pyglet.window.key.KeyStateHandler()
 w.push_handlers(keys)
 
 glClearColor(1,1,1,1)
 glEnable(GL_LINE_SMOOTH)
+glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+glLineWidth(2)
 
 squirtle.setup_gl()
 
