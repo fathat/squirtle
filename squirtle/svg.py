@@ -55,6 +55,8 @@ BEZIER_POINTS = 20
 CIRCLE_POINTS = 24
 TOLERANCE = 0.001
 
+xmlns = 'http://www.w3.org/2000/svg'
+
 def setup_gl():
     """Set various pieces of OpenGL state for better rendering of SVG.
     
@@ -66,14 +68,17 @@ def setup_gl():
 
 class SvgPath(object):
     def __init__(self, path, stroke, polygon, fill, transform, path_id, title, desc):
-        self.path = path if path else []
+        
+        self.path = list(path) if path else []
         self.stroke = stroke
         self.polygon = polygon
         self.fill = fill
-        self.transform = transform
+        self.transform = Matrix(transform.values)
         self.id = path_id
         self.title = title
         self.description = desc
+        print "PATH", self.path
+        
         
     def __repr__(self):
         return "<SvgPath id=%s title='%s' description='%s' transform=%s>" %(
@@ -297,8 +302,8 @@ class SVG(object):
         fill_opacity = float(e.get('fill-opacity', 1))
         stroke_opacity = float(e.get('stroke-opacity', 1))
         self.path_id = e.get('id', '')
-        self.path_title = e.find('title')
-        self.path_description = ''
+        self.path_title = e.findtext('{%s}title' % (xmlns,))
+        self.path_description = e.findtext('{%s}desc' % (xmlns,))
 
         
         oldtransform = self.transform

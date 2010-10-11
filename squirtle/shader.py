@@ -12,13 +12,11 @@ class Shader(object):
         self.program = None
     
     def __del__ (self ):
-        print "ARRR!"
         if self.program:
             self.program.detachShader( self )
             self.program = None
         
         glDeleteShader( self.shaderObject )
-        print "Shader " + self.name + " deleted"
     
     def source( self, source_string ):
         c = ctypes
@@ -153,10 +151,10 @@ def MakeVertexShaderFromSource ( src ):
     return MakeShaderFromSource( src, GL_VERTEX_SHADER_ARB )
 
 def MakeShaderFromSource( src, shader_type ):
-        shader =  Shader( shader_type )
-        shader.source( src )
-        shader.compileShader()
-        return shader
+    shader =  Shader( shader_type )
+    shader.source( src )
+    shader.compileShader()
+    return shader
 
 def MakeProgramFromSourceFiles( vertex_shader_name, pixel_shader_name ):
     file = open( vertex_shader_name, "r")
